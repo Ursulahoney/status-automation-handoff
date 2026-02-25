@@ -1,0 +1,6 @@
+{
+  "report_timezone": "America/Denver",
+  "week_starts_on": "Monday",
+  "sla_minutes_target": 240,
+  "max_items_on_homepage": 20
+}
