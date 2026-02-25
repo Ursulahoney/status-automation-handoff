@@ -1,0 +1,17 @@
+[
+  {
+    "id": "INC-1001",
+    "issue_number": 1,
+    "title": "Checkout failures for some users",
+    "severity": "high",
+    "status": "resolved",
+    "start_time": "2026-02-22T23:40:00Z",
+    "end_time": "2026-02-23T01:10:00Z",
+    "services": ["payments", "web"],
+    "updates": [
+      {"time": "2026-02-22T23:45:00Z", "message": "Investigating reports of failed checkouts."},
+      {"time": "2026-02-23T00:30:00Z", "message": "Mitigation in progress."},
+      {"time": "2026-02-23T01:10:00Z", "message": "Resolved. Monitoring."}
+    ]
+  }
+]
