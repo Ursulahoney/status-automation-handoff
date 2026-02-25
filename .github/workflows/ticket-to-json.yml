@@ -1,3 +1,33 @@
+name: Ticket to JSON
+
+on:
+  issues:
+    types: [opened, edited, labeled]
+
+permissions:
+  contents: write
+  issues: read
+
+jobs:
+  update_incidents:
+    if: contains(github.event.issue.labels.*.name, 'incident')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Update incidents.json from issue body
+        env:
+          ISSUE_BODY: ${{ github.event.issue.body }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: node scripts/issue_to_incident.js
+
       - name: Commit changes
         run: |
           git config user.name "github-actions[bot]"
@@ -6,7 +36,6 @@
           git add data/incidents.json
           git commit -m "Update incidents.json from issue #${{ github.event.issue.number }}" || exit 0
 
-          # Pull latest and retry push (handles concurrent pushes)
           for i in 1 2 3; do
             git pull --rebase origin main || true
             git push && break
