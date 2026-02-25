@@ -12,41 +12,50 @@ const issueNumber = Number(process.env.ISSUE_NUMBER || "0");
 const title = getField(body, "Title");
 const severity = getField(body, "Severity");
 const status = getField(body, "Status");
-const start_time = getField(body, "Start time");
-const end_time = getField(body, "End time");
+const startTime = getField(body, "Start time");
+const endTime = getField(body, "End time");
 const servicesRaw = getField(body, "Services");
 
-if (!title || !severity || !status || !start_time) {
-  console.error("Missing required fields.");
+const services = servicesRaw
+  ? servicesRaw.split(",").map((s) => s.trim()).filter(Boolean)
+  : [];
+
+if (!issueNumber || !title || !severity || !status || !startTime) {
+  console.error("Missing required fields");
   process.exit(1);
 }
 
-const services = servicesRaw
-  ? servicesRaw.split(",").map(s => s.trim()).filter(Boolean)
-  : [];
+const dataPath = "data/incidents.json";
+const incidents = JSON.parse(fs.readFileSync(dataPath, "utf8"));
+
+const nextIdNum =
+  incidents.reduce((max, inc) => {
+    const m = String(inc.id || "").match(/^INC-(\d+)$/);
+    const n = m ? Number(m[1]) : 0;
+    return Math.max(max, n);
+  }, 1000) + 1;
+
+const id = `INC-${nextIdNum}`;
 
 const incident = {
-  id: `INC-${1000 + issueNumber}`,
+  id,
   issue_number: issueNumber,
   title,
   severity,
   status,
-  start_time,
-  end_time: end_time || null,
+  start_time: startTime,
+  end_time: endTime || null,
   services,
   updates: [
-    { time: new Date().toISOString(), message: "Incident created from GitHub issue." }
-  ]
+    {
+      time: new Date().toISOString(),
+      message: "Incident created from GitHub issue.",
+    },
+  ],
 };
 
-const path = "data/incidents.json";
-const raw = fs.readFileSync(path, "utf8");
-const incidents = JSON.parse(raw);
+const updated = incidents.filter((x) => x.issue_number !== issueNumber);
+updated.push(incident);
 
-// BUG: if same issue_number exists, replace entire file with only this incident (data loss)
-const filtered = incidents.filter(i => i.issue_number !== issueNumber);
-filtered.push(incident);
-
-// BUG: no locking; writes whole file
-fs.writeFileSync(path, JSON.stringify(filtered, null, 2));
-console.log("Updated incidents.json");
+fs.writeFileSync(dataPath, JSON.stringify(updated, null, 2) + "\n");
+console.log(`Wrote incident ${id} from issue #${issueNumber}`);
